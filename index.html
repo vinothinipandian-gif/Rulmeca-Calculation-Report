@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rulmeca - Drive Power & Torque Calculator</title>
+  
+  <!-- Tailwind CSS for rapid UI styling -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- html2pdf library for PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans p-6">
+
+  <!-- Action Controls -->
+  <div class="max-w-5xl mx-auto mb-4 flex justify-between items-center no-print">
+    <h1 class="text-xl font-bold text-gray-700">Rulmeca App MVP</h1>
+    <button onclick="generatePDF()" class="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded shadow transition">
+      Export PDF Report
+    </button>
+  </div>
+
+  <!-- PDF Content Container -->
+  <div id="pdf-report" class="max-w-5xl mx-auto bg-white p-8 rounded-lg shadow-md border border-gray-200">
+    
+    <!-- Rulmeca Header Section -->
+    <div class="flex justify-between items-center border-b-2 border-red-600 pb-4 mb-6">
+      <div>
+        <h1 class="text-3xl font-extrabold text-red-600 tracking-wide">RULMECA</h1>
+        <p class="text-xs text-gray-500 font-semibold uppercase">Bulk Motorized Pulley Computation | CEMA</p>
+      </div>
+      <div class="text-right text-xs text-gray-500">
+        <p><strong>System:</strong> RCS Version 6.2.2</p>
+        <p><strong>Date:</strong> <span id="comp-date"></span></p>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- Input Parameters Column -->
+      <div>
+        <h2 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4 bg-gray-50 p-2 rounded">
+          Operating Conditions (Inputs)
+        </h2>
+        
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Capacity (TPH):</label>
+            <input type="number" id="capacity" value="150" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Belt Width (mm):</label>
+            <input type="number" id="beltWidth" value="800" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Belt Length (m):</label>
+            <input type="number" id="beltLength" value="18" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Incline Angle (°):</label>
+            <input type="number" id="inclineAngle" value="18" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Belt Speed (m/s):</label>
+            <input type="number" step="0.1" id="beltSpeed" value="1.4" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Motorized Pulley Mass (kg):</label>
+            <input type="number" id="motorPulleyMass" value="550" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Tail Pulley Mass (kg):</label>
+            <input type="number" id="tailPulleyMass" value="200" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Friction Co-efficient:</label>
+            <input type="number" step="0.01" id="frictionCoeff" value="0.14" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Efficiency (η):</label>
+            <input type="number" step="0.01" id="efficiency" value="0.85" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+
+          <div class="flex justify-between items-center">
+            <label class="font-medium text-gray-600">Selected Drum Dia (mm):</label>
+            <input type="number" id="drumDia" value="400" class="w-28 border border-gray-300 p-1 rounded text-right focus:ring-2 focus:ring-red-500" oninput="calculate()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Calculated Outputs Column -->
+      <div>
+        <h2 class="text-lg font-bold text-gray-700 border-b pb-2 mb-4 bg-gray-50 p-2 rounded">
+          Computed Power & Torque (Outputs)
+        </h2>
+        
+        <div class="space-y-3 text-sm">
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Material Weight per meter:</span>
+            <span class="font-bold text-gray-800" id="matWeightMeter">0.00 kg/m</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Total Material Mass (M):</span>
+            <span class="font-bold text-gray-800" id="massM">0.00 kg</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Belt Mass (Mb):</span>
+            <span class="font-bold text-gray-800" id="massMb">0.00 kg</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Drum Mass (Mr):</span>
+            <span class="font-bold text-gray-800" id="massMr">0.00 kg</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1 bg-yellow-50 p-1 rounded">
+            <span class="font-semibold text-gray-700">Net Belt Pull Force (Fu):</span>
+            <span class="font-bold text-red-600" id="forceFu">0.00 N</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1 bg-green-50 p-1 rounded">
+            <span class="font-semibold text-gray-700">Motor Capacity:</span>
+            <span class="font-bold text-green-700" id="motorCapacity">0.00 kW</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Drum Speed:</span>
+            <span class="font-bold text-gray-800" id="drumRpm">0.00 RPM</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1">
+            <span class="text-gray-600">Required Torque (SF 1.0):</span>
+            <span class="font-bold text-gray-800" id="torque10">0.00 Nm</span>
+          </div>
+
+          <div class="flex justify-between border-b pb-1 bg-blue-50 p-1 rounded">
+            <span class="font-semibold text-gray-700">Required Torque (SF 1.6):</span>
+            <span class="font-bold text-blue-700" id="torque16">0.00 Nm</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Footer Note -->
+    <div class="mt-8 pt-4 border-t text-center text-xs text-gray-400">
+      Generated automatically by Rulmeca Computation Engine MVP.
+    </div>
+  </div>
+
+  <!-- Real-Time Logic Engine JavaScript -->
+  <script>
+    // Set Current Date
+    document.getElementById('comp-date').innerText = new Date().toLocaleDateString();
+
+    function calculate() {
+      // 1. Fetch Input Values
+      const capacity = parseFloat(document.getElementById('capacity').value) || 0;
+      const beltWidth = parseFloat(document.getElementById('beltWidth').value) || 0;
+      const beltLength = parseFloat(document.getElementById('beltLength').value) || 0;
+      const inclineAngle = parseFloat(document.getElementById('inclineAngle').value) || 0;
+      const beltSpeed = parseFloat(document.getElementById('beltSpeed').value) || 0.001; // avoid div by zero
+      const motorPulleyMass = parseFloat(document.getElementById('motorPulleyMass').value) || 0;
+      const tailPulleyMass = parseFloat(document.getElementById('tailPulleyMass').value) || 0;
+      const frictionCoeff = parseFloat(document.getElementById('frictionCoeff').value) || 0;
+      const efficiency = parseFloat(document.getElementById('efficiency').value) || 0.001;
+      const drumDia = parseFloat(document.getElementById('drumDia').value) || 0.001;
+
+      // 2. Perform Calculations
+      // Weight of material per meter (kg/m)
+      const matWeightMeter = (capacity * 1000) / 3600 / beltSpeed;
+
+      // Masses
+      const massM = matWeightMeter * beltLength;
+      const massMb = (beltWidth / 1000) * 11.5 * beltLength;
+      const massMr = motorPulleyMass + tailPulleyMass;
+
+      // Force Fu (N)
+      const radAngle = inclineAngle * (Math.PI / 180);
+      const frictionForce = frictionCoeff * 9.81 * (massM + massMb + massMr);
+      const inclineForce = 9.81 * massM * Math.sin(radAngle);
+      const forceFu = frictionForce + inclineForce;
+
+      // Motor Capacity (kW)
+      const motorCapacity = (forceFu * beltSpeed) / 1000 / efficiency;
+
+      // Drum Speed & Torque
+      const drumRadiusMeters = drumDia / 2000;
+      const drumRpm = (beltSpeed * 60) / (2 * Math.PI * drumRadiusMeters);
+      const torque10 = (motorCapacity * 1000) / (drumRpm * (2 * Math.PI / 60));
+      const torque16 = torque10 * 1.6;
+
+      // 3. Output Results to UI
+      document.getElementById('matWeightMeter').innerText = matWeightMeter.toFixed(2) + ' kg/m';
+      document.getElementById('massM').innerText = massM.toFixed(2) + ' kg';
+      document.getElementById('massMb').innerText = massMb.toFixed(2) + ' kg';
+      document.getElementById('massMr').innerText = massMr.toFixed(2) + ' kg';
+      document.getElementById('forceFu').innerText = forceFu.toFixed(2) + ' N';
+      document.getElementById('motorCapacity').innerText = motorCapacity.toFixed(2) + ' kW';
+      document.getElementById('drumRpm').innerText = drumRpm.toFixed(2) + ' RPM';
+      document.getElementById('torque10').innerText = torque10.toFixed(2) + ' Nm';
+      document.getElementById('torque16').innerText = torque16.toFixed(2) + ' Nm';
+    }
+
+    // Trigger calculation on page load
+    calculate();
+
+    // PDF Export Function
+    function generatePDF() {
+      const element = document.getElementById('pdf-report');
+      const opt = {
+        margin:       0.5,
+        filename:     'Rulmeca_Calculation_Report.pdf',
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2 },
+        jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+      };
+      html2pdf().set(opt).from(element).save();
+    }
+  </script>
+</body>
+</html>
